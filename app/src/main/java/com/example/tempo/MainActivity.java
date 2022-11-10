@@ -15,9 +15,10 @@ import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
 //import android.view.View;
-import android.util.Log;
+//import android.util.Log;
+//import android.view.View;
+//import android.widget.Button;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -25,16 +26,21 @@ import android.widget.Toast;
 
 import java.lang.Math;
 import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
+
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
 
     private static final int TIME_STAMP_LENGTH = 10;
     private static final float MAX_SECONDS_BETWEEN_STEPS = 1;
+    private static final float SECONDS_UNTIL_PAUSE = 5;
 
     SensorManager sensorManager;
     Sensor stepCountSensor;
     TextView stepCountView;
     TextView stepsPerMinuteView;
+    TextView autoPauseView;
     long lastStepTimeStamp = 0;
     float secondsFromLastStep = 0;
 
@@ -44,6 +50,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     int timeStampIndex = 0;
     float timeStampTotalTime = 0;
     int stepsPerMinute = 0;
+    boolean autoPaused = false;
 
     ImageButton btnPlay;
     ImageButton btnNext;
@@ -59,6 +66,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     String[][] bpm90to99 = {{"loser", "spring"}, {"Loser", "봄봄봄"}, {"BIGBANG", "로이킴"},};
     String[][] bpm100to109 = {{"fromtoday", "blueming"}, {"오늘부터 우리는", "Blueming"}, {"여자친구", "IU"},};
     String[][] bpmOver110 = {{"luckystar", "tiktok"}, {"Lucky Star", "Tik Tok"}, {"Madonna", "Kesha"}};
+
+    TimerTask timerTask = null;
+    Timer timer = new Timer();
 
     @RequiresApi(api = Build.VERSION_CODES.Q)
     @Override
@@ -83,6 +93,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         albumArt = findViewById(R.id.albumArt);
         songTitle = findViewById(R.id.songTitle);
         singerName = findViewById(R.id.singerName);
+        autoPauseView = findViewById(R.id.autoPauseView);
+        autoPauseView.setVisibility(View.INVISIBLE);
 
         // 활동 퍼미션 체크
         if (ContextCompat.checkSelfPermission(this,
@@ -101,6 +113,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         //재생, 중지 버튼
         btnPlay.setOnClickListener(v -> {
+            stopPauseTimer();
             if(mediaPlayer.isPlaying()){
                 mediaPlayer.pause();
                 btnPlay.setImageResource(android.R.drawable.ic_media_play);
@@ -112,12 +125,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             }
         });
 
-        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            @Override
-            public void onCompletion(MediaPlayer mp) {
-                selectSong();
-            }
-        });
+        mediaPlayer.setOnCompletionListener(mp -> selectSong());
 
     }
 
@@ -137,6 +145,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 addStep();
                 recordTimeStamp(event);
                 refreshStepsPerMinute();
+                // 자동 일시정지 상태라면 다시 음악을 재생
+                if (autoPaused){
+                    mediaPlayer.start();
+                    btnPlay.setImageResource(android.R.drawable.ic_media_pause);
+                }
+                // 자동 일시정지 타이머 초기화
+                startPauseTimer();
             }
         }
     }
@@ -186,12 +201,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mediaPlayer = MediaPlayer.create(this, songId);
         mediaPlayer.start();
 
-        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-            @Override
-            public void onCompletion(MediaPlayer mp) {
-                selectSong();
-            }
-        });
+        mediaPlayer.setOnCompletionListener(mp -> selectSong());
 
     }
 
@@ -199,7 +209,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private void selectSong(){
 
         Random rd = new Random();
-        MediaPlayer nextSong;
         int songIdx = rd.nextInt(2);
 
         if (stepsPerMinute < 80){
@@ -212,7 +221,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         }
 
-        else if(stepsPerMinute >= 80 && stepsPerMinute < 90 ){
+        else if(stepsPerMinute < 90 ){
             int iconResId = getResources().getIdentifier(bpm80to89[0][songIdx], "drawable",getPackageName());
             albumArt.setImageResource(iconResId);
             int songId = getResources().getIdentifier(bpm80to89[0][songIdx], "raw",getPackageName());
@@ -221,7 +230,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             singerName.setText(String.valueOf(bpm80to89[2][songIdx]));
         }
 
-        else if(stepsPerMinute >= 90 && stepsPerMinute < 100 ){
+        else if(stepsPerMinute < 100 ){
             int iconResId = getResources().getIdentifier(bpm90to99[0][songIdx], "drawable",getPackageName());
             albumArt.setImageResource(iconResId);
             int songId = getResources().getIdentifier(bpm90to99[0][songIdx], "raw",getPackageName());
@@ -231,7 +240,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         }
 
-        else if(stepsPerMinute >= 100 && stepsPerMinute < 110 ){
+        else if(stepsPerMinute < 110 ){
             int iconResId = getResources().getIdentifier(bpm100to109[0][songIdx], "drawable",getPackageName());
             albumArt.setImageResource(iconResId);
             int songId = getResources().getIdentifier(bpm100to109[0][songIdx], "raw",getPackageName());
@@ -241,7 +250,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         }
 
-        else if(stepsPerMinute >= 110 ){
+        else{
             int iconResId = getResources().getIdentifier(bpmOver110[0][songIdx], "drawable",getPackageName());
             albumArt.setImageResource(iconResId);
             int songId = getResources().getIdentifier(bpmOver110[0][songIdx], "raw",getPackageName());
@@ -249,6 +258,30 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             songTitle.setText(String.valueOf(bpmOver110[1][songIdx]));
             singerName.setText(String.valueOf(bpmOver110[2][songIdx]));
 
+        }
+    }
+
+    private void startPauseTimer(){
+        stopPauseTimer();
+        //자동 일시정지
+        timerTask = new TimerTask(){
+            @Override
+            public void run(){
+                autoPaused = true;
+                runOnUiThread(() -> autoPauseView.setVisibility(View.VISIBLE));
+                mediaPlayer.pause();
+                btnPlay.setImageResource(android.R.drawable.ic_media_play);
+            }
+        };
+        timer.schedule(timerTask,(int)(SECONDS_UNTIL_PAUSE * 1000));
+    }
+
+    private void stopPauseTimer(){
+        autoPaused = false;
+        autoPauseView.setVisibility(View.INVISIBLE);
+        if (timerTask != null){
+            timerTask.cancel();
+            timerTask = null;
         }
     }
 
