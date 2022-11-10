@@ -62,7 +62,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     TextView singerName;
 
     String[][] bpmUnder80 = {{"oursparklingbeginning", "forloverswhohesitate"}, {"반짝이던 안녕", "주저하는 연인들을 위해"}, {"Fromm", "잔나비"},};
-    String[][] bpm80to89 = {{"eightlettes", "strawberries_cigarettes"}, {"8 Letters", "Strawberries & Cigarettes"}, {"Why Don't We", "Troye Sivan"},};
+    String[][] bpm80to89 = {{"eightletters", "strawberries_cigarettes"}, {"8 Letters", "Strawberries & Cigarettes"}, {"Why Don't We", "Troye Sivan"},};
     String[][] bpm90to99 = {{"loser", "spring"}, {"Loser", "봄봄봄"}, {"BIGBANG", "로이킴"},};
     String[][] bpm100to109 = {{"fromtoday", "blueming"}, {"오늘부터 우리는", "Blueming"}, {"여자친구", "IU"},};
     String[][] bpmOver110 = {{"luckystar", "tiktok"}, {"Lucky Star", "Tik Tok"}, {"Madonna", "Kesha"}};
