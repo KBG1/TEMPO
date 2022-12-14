@@ -498,6 +498,7 @@
                         android:textSize="20dp" />
 
                     <LinearLayout
+
                         android:layout_width="match_parent"
                         android:layout_height="0dp"
                         android:layout_weight="1"
@@ -509,14 +510,15 @@
                             android:layout_width="wrap_content"
                             android:layout_height="70dp"
                             android:layout_weight="1"
-                            app:srcCompat="@drawable/successicon" />
+                            app:srcCompat="@drawable/failedicon" />
+
 
                         <ImageView
                             android:id="@+id/level2_2"
                             android:layout_width="wrap_content"
                             android:layout_height="70dp"
                             android:layout_weight="1"
-                            app:srcCompat="@drawable/failedicon" />
+                            app:srcCompat="@drawable/failedicon"/>
 
                         <ImageView
                             android:id="@+id/level2_3"

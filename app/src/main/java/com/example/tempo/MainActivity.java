@@ -7,6 +7,7 @@ import androidx.core.content.ContextCompat;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.res.TypedArray;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -15,7 +16,12 @@ import android.os.Build;
 import android.os.Bundle;
 import android.widget.CompoundButton;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.Toast;
+import android.app.Activity;
+import android.graphics.drawable.Drawable;
+import android.os.Bundle;
+import android.widget.ImageView;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
 
@@ -36,8 +42,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     CompoundButton challengeSwitch;
 
-    private final String targetLevel = "LEVEL4"; //레벨
-    private final String targetStage = "-1"; //세부 스테이지
+    private String targetLevel = "LEVEL2"; //레벨
+    private String targetStage = "-1"; //세부 스테이지
 
     @RequiresApi(api = Build.VERSION_CODES.Q)
     @Override
@@ -48,7 +54,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         stepMeasure = new StepMeasure(MainActivity.this, this);
         autoPause = new AutoPause(MainActivity.this, this);
         musicSelector = new MusicSelector(MainActivity.this, this);
-
         musicSelector.setStepMeasure(stepMeasure);
 
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -60,14 +65,17 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         challenge = new Challenge(MainActivity.this, this, targetLevel, targetStage);
         challengeSwitch = findViewById(R.id.challengeSwitch);
+        challenge.exitChallengeMode();
         challengeSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if(isChecked) {
                 isChallenge = true;
                 challenge.enterChallengeMode(musicSelector, stepMeasure);
+                autoPause.stopPauseTimer();
             }
             else {
                 isChallenge = false;
                 challenge.exitChallengeMode();
+                musicSelector.selectSong(stepMeasure.getStepsPerMinute());
             }
         });
 
@@ -126,7 +134,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     btnPlay.setImageResource(android.R.drawable.ic_media_pause);
                 }
                 // 자동 일시정지 타이머 초기화
-                autoPause.startPauseTimer(musicSelector.getMediaPlayer(), btnPlay);
+                if(!isChallenge) {
+                    autoPause.startPauseTimer(musicSelector.getMediaPlayer(), btnPlay);
+                }
             }
         }
     }

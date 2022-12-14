@@ -23,6 +23,7 @@ public class MusicSelector {
     private MediaPlayer mediaPlayer;
     String[][] targetSongs;
     int playCount;
+    int currentSongIdx = 0;
 
     private final ImageView albumArt;
     private final TextView songTitle;
@@ -52,8 +53,11 @@ public class MusicSelector {
     
     //분당 걸음 수에 따른 음악을 선택 및 재생 (디폴트 모드)
     public void selectSong(int stepsPerMinute){
-        int songIdx = rd.nextInt(2);
-
+        int songIdx = currentSongIdx;
+        while(songIdx == currentSongIdx){
+            songIdx = rd.nextInt(2);
+        }
+        currentSongIdx = songIdx;
         if (stepsPerMinute < 80){
             targetSongs = bpmUnder80;
         } else if(stepsPerMinute < 90 ) {
@@ -75,7 +79,11 @@ public class MusicSelector {
     }
 
     public void selectChallengeSong(){
-        int songIdx = rd.nextInt(2);
+        int songIdx = currentSongIdx;
+        while(songIdx == currentSongIdx){
+            songIdx = rd.nextInt(2);
+        }
+        currentSongIdx = songIdx;
         int imageId = activity.getResources().getIdentifier(targetSongs[0][songIdx], "drawable",activity.getPackageName());
         int songId = activity.getResources().getIdentifier(targetSongs[0][songIdx], "raw",activity.getPackageName());
         songTitle.setText(String.valueOf(targetSongs[1][songIdx]));
